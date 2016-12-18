@@ -1,15 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
-const queries = require('../db/queries');
-const validTodo = require('../../lib/validations').validTodo;
-const validId = require('../../lib/validations').validId;
-const setStatusRenderError = require('../../lib/responseHelpers');
+const knex = require('../db/knex');
 
 /* This router is mounted at /todo */
 router.get('/', (req, res) => {
-  queries
-    .getAll()
+  knex('todo')
+    .select()
     .then(todos => {
       res.render('all', { todos: todos });
     });
@@ -32,8 +29,8 @@ router.get('/:id/edit', (req, res) => {
 router.post('/', (req, res) => {
   validateTodoRenderError(req, res, (todo) => {
     todo.date = new Date();
-    queries
-      .create(todo)
+    knex('todo')
+      .insert(todo, 'id')
       .then(ids => {
         const id = ids[0];
         res.redirect(`/todo/${id}`);
@@ -44,8 +41,9 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   validateTodoRenderError(req, res, (todo) => {
     const id = req.params.id;
-    queries
-      .update(id, todo)
+    knex('todo')
+      .where('id', id)
+      .update(todo, 'id')
       .then(() => {
         res.redirect(`/todo/${id}`);
       });
@@ -55,13 +53,17 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   const id = req.params.id;
   if(validId(id)) {
-    queries
-      .delete(id)
+    knex('todo')
+      .where('id', id)
+      .del()
       .then(() => {
         res.redirect('/todo');
       });
   } else {
-    setStatusRenderError(res, 500, 'Invalid id');
+    res.status( 500);
+    res.render('error', {
+      message:  'Invalid id'
+    });
   }
 });
 
@@ -75,20 +77,39 @@ function validateTodoRenderError(req, res, callback) {
 
     callback(todo);
   } else {
-    setStatusRenderError(res, 500, 'Invalid todo');
+    res.status( 500);
+    res.render('error', {
+      message:  'Invalid todo'
+    });
   }
 }
 
 function respondAndRenderTodo(id, res, viewName) {
   if(validId(id)) {
-    queries
-      .getOne(id)
+    knex('todo')
+      .select()
+      .where('id', id)
+      .first()
       .then(todo => {
         res.render(viewName, todo);
       });
   } else {
-    setStatusRenderError(res, 500, 'Invalid id');
+    res.status( 500);
+    res.render('error', {
+      message:  'Invalid id'
+    });
   }
+}
+
+function validTodo(todo) {
+  return typeof todo.title == 'string' &&
+          todo.title.trim() != '' &&
+          typeof todo.priority != 'undefined' &&
+          !isNaN(todo.priority);
+}
+
+function validId(id) {
+  return !isNaN(id);
 }
 
 module.exports = router;
