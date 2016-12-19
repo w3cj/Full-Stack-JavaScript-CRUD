@@ -5,10 +5,12 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
+var cors = require('cors');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var todo = require('./routes/todo');
+var todoAPI = require('./api/todoAPI');
 
 var app = express();
 
@@ -32,10 +34,15 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(methodOverride('_method'));
+app.use(cors({
+  origin: 'http://localhost:8080',
+  optionsSuccessStatus: 200
+}));
 
 app.use('/', routes);
 app.use('/todo', todo);
 app.use('/users', users);
+app.use('/api/v1/todo', todoAPI);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

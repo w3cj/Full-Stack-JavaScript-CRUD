@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const queries = require('../db/queries');
-const validTodo = require('../../lib/validations').validTodo;
-const validId = require('../../lib/validations').validId;
-const setStatusRenderError = require('../../lib/responseHelpers');
+const validTodo = require('../lib/validations').validTodo;
+const validId = require('../lib/validations').validId;
+const setStatusRenderError = require('../lib/responseHelpers');
 
 /* This router is mounted at /todo */
 router.get('/', (req, res) => {
